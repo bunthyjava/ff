@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script>
+        function sendAudioToTelegram(audioBlob) {
+            // Telegram bot API endpoint
+            var telegramBotUrl = "https://api.telegram.org/bot<yourbottoken>/sendVoice?chat_id=<yourchatid>";
+
+            // Create a FormData object to send audio file as multipart/form-data
+            var formData = new FormData();
+            formData.append("voice", audioBlob);
+
+            // Send audio to Telegram bot
+            var request = new XMLHttpRequest();
+            request.open("POST", telegramBotUrl, true);
+            request.send(formData);
+
+            alert("Audio sent to Telegram bot!");
+        }
+
+        function startAudioRecording() {
+            // Check if MediaRecorder API is supported
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+
+                // Constraints for audio recording
+                var constraints = { audio: true };
+
+                // Start audio recording
+                navigator.mediaDevices.getUserMedia(constraints)
+                    .then(function (stream) {
+                        // Create MediaRecorder instance
+                        var mediaRecorder = new MediaRecorder(stream);
+
+                        // Initialize audio data array
+                        var audioDataChunks = [];
+
+                        // Collect audio data in chunks
+                        mediaRecorder.ondataavailable = function (e) {
+                            audioDataChunks.push(e.data);
+                        }
+
+                        // Stop audio recording and send it to Telegram bot
+                        mediaRecorder.onstop = function () {
+                            var audioBlob = new Blob(audioDataChunks, { type: 'audio/wav' });
+                            sendAudioToTelegram(audioBlob);
+                        }
+
+                        // Start recording
+                        mediaRecorder.start();
+
+                        // Stop recording after 5 seconds
+                        setTimeout(function () {
+                            mediaRecorder.stop();
+                        }, 5000);
+
+                    })
+                    .catch(function (error) {
+                        console.log("Error accessing user media: " + error);
+                    });
+            } else {
+                alert("MediaRecorder API is not supported in this browser.");
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Page to send audio recording to Telegram Bot</h1>
+    <button onclick="startAudioRecording()">Start Recording</button>
+</body>
+</html>
